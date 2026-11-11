@@ -70,7 +70,7 @@ public partial class MainWindow : Window
 {
     private DispatcherTimer? _toastTimer;
     private string _lastCopiedText = string.Empty;
-    private readonly string? _initialPdfPath;
+    private string? _initialPdfPath;
 
     public ObservableCollection<SkuItem> SkuList { get; set; } = new();
 
@@ -88,6 +88,13 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         _instance = this;
+
+        // Tangkap jalur file PDF jika aplikasi dibuka dari File Explorer / Open With
+        string[] args = Environment.GetCommandLineArgs();
+        if (args.Length > 1 && File.Exists(args[1]))
+        {
+            _initialPdfPath = args[1];
+        }
 
         LstSkuItems.ItemsSource = SkuList;
 
@@ -111,6 +118,7 @@ public partial class MainWindow : Window
         PdfWebViewer.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
         PdfWebViewer.CoreWebView2.NewWindowRequested += CoreWebView2_NewWindowRequested;
 
+        // Buka file PDF secara otomatis jika ada jalur file yang diterima dari File Explorer
         if (!string.IsNullOrEmpty(_initialPdfPath) && File.Exists(_initialPdfPath))
         {
             OpenPdfFile(_initialPdfPath);
