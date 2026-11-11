@@ -1,0 +1,9 @@
+## Visual Studio Temporary & Build Folders
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+## Local Settings
+window_settings.json
