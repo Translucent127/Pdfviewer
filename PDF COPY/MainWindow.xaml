@@ -2,15 +2,79 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
-        Title="PDF COPY v1.3.0" Height="750" Width="1240"
-        Background="#1E1E1E" WindowStartupLocation="Manual">
+        Title="PDF COPY v1.4.0" Height="750" Width="1240"
+        Background="#1E1E1E" WindowStartupLocation="Manual"
+        Icon="Assets/app_icon.ico"
+        WindowStyle="None" ResizeMode="CanResize">
+
+    <!-- Custom Window Chrome Edge Style -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="40" ResizeBorderThickness="5" GlassFrameThickness="0" CornerRadius="0"/>
+    </WindowChrome.WindowChrome>
 
     <Window.Resources>
+        <!-- Style Window Control Buttons (Minimize, Maximize, Close) -->
+        <Style x:Key="WinControlButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#2D2D2D"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#3D3D3D"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="WinCloseButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#E81123"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#F1707A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Style Button Toolbar Header -->
         <Style x:Key="HeaderButtonStyle" TargetType="Button">
-            <Setter Property="Height" Value="28"/>
-            <Setter Property="Padding" Value="12,0"/>
-            <Setter Property="Background" Value="#333333"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Background" Value="#2D2D2D"/>
             <Setter Property="Foreground" Value="#F1F1F1"/>
             <Setter Property="BorderBrush" Value="#444444"/>
             <Setter Property="BorderThickness" Value="1"/>
@@ -21,12 +85,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4"
-                                Padding="{TemplateBinding Padding}">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -35,7 +94,7 @@
                                 <Setter TargetName="border" Property="BorderBrush" Value="#555555"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#282828"/>
+                                <Setter TargetName="border" Property="Background" Value="#202020"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -43,14 +102,14 @@
             </Setter>
         </Style>
 
-        <!-- Style Auto Copy Box -->
-        <Style x:Key="HeaderBoxStyle" TargetType="Border">
-            <Setter Property="Height" Value="28"/>
-            <Setter Property="Padding" Value="12,0"/>
-            <Setter Property="Background" Value="#333333"/>
-            <Setter Property="BorderBrush" Value="#444444"/>
+        <!-- Style Edge Address Bar Box -->
+        <Style x:Key="AddressBarStyle" TargetType="Border">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Background" Value="#1E1E1E"/>
+            <Setter Property="BorderBrush" Value="#383838"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="CornerRadius" Value="15"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
@@ -73,54 +132,229 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Edge Browser TabItem Style (Responsif Dinamis: Max 200px, Min 50px) -->
+        <Style TargetType="TabItem" x:Key="EdgeTabItemStyle">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#999999"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="Margin" Value="0,3,2,0"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="MaxWidth" Value="200"/>
+            <Setter Property="MinWidth" Value="50"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="8,8,0,0" Padding="{TemplateBinding Padding}" Margin="{TemplateBinding Margin}">
+                            <ContentPresenter ContentSource="Header" HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#2B2B2B"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#222222"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="44"/>
+            <RowDefinition Height="40"/>
+            <!-- Title Bar + Edge Tab Strip -->
+            <RowDefinition Height="46"/>
+            <!-- Navigation & Address Toolbar -->
             <RowDefinition Height="*"/>
+            <!-- Main Workspace -->
         </Grid.RowDefinitions>
 
-        <!-- Header Toolbar -->
-        <Border Grid.Row="0" Background="#252525" BorderBrush="#333333" BorderThickness="0,0,0,1" Padding="12,0">
+        <!-- ROW 0: TITLE BAR EDGE TABS -->
+        <Border Grid.Row="0" Background="#161616" BorderBrush="#262626" BorderThickness="0,0,0,1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
+                    <!-- App Icon -->
                     <ColumnDefinition Width="*"/>
+                    <!-- PDF Tab Strip -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Window Control Buttons -->
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Name="BtnOpenPdf" Content="Open PDF" Style="{StaticResource HeaderButtonStyle}" Click="BtnOpenPdf_Click"/>
-                    <Button Name="BtnResetPdf" Content="Reset" Style="{StaticResource HeaderButtonStyle}" Margin="6,0,0,0" Click="BtnResetPdf_Click"/>
-                    <TextBlock Name="TxtFileName" Text="" Foreground="#8E8E8E" 
-                               VerticalAlignment="Center" Margin="12,0,0,0" FontSize="12" MaxWidth="300" TextTrimming="CharacterEllipsis"/>
+                <!-- App Icon -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,6,0" WindowChrome.IsHitTestVisibleInChrome="False">
+                    <Image Source="Assets/app_icon.ico" Width="18" Height="18" VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <Button Name="BtnToggleSku" Content="Side Panel" Style="{StaticResource HeaderButtonStyle}" Margin="0,0,6,0" Click="BtnToggleSku_Click"/>
-                    <Border Style="{StaticResource HeaderBoxStyle}">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="Auto Copy:" Foreground="#F1F1F1" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Margin="0,0,6,0"/>
-                            <CheckBox Name="ChkAutoCopy" IsChecked="True" Content="Enabled" Foreground="#22C55E" 
-                                      VerticalAlignment="Center" FontWeight="Bold" FontSize="12" Cursor="Hand"/>
-                        </StackPanel>
-                    </Border>
+                <!-- Edge-Style Multi-Tab Control (Penyesuaian Dinamis dengan UniformGrid) -->
+                <TabControl Name="PdfTabControl" Grid.Column="1" Background="Transparent" BorderThickness="0"
+                            SelectionChanged="PdfTabControl_SelectionChanged"
+                            VerticalAlignment="Bottom" WindowChrome.IsHitTestVisibleInChrome="True">
+                    <TabControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="1" HorizontalAlignment="Left" VerticalAlignment="Bottom"/>
+                        </ItemsPanelTemplate>
+                    </TabControl.ItemsPanel>
+                </TabControl>
+
+                <!-- Window Action Buttons (Minimize, Maximize, Close) -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" WindowChrome.IsHitTestVisibleInChrome="True" VerticalAlignment="Top">
+                    <Button Content="&#xE921;" Width="46" Height="40" Style="{StaticResource WinControlButtonStyle}" Click="BtnWinMinimize_Click"/>
+                    <Button Content="&#xE922;" Width="46" Height="40" Style="{StaticResource WinControlButtonStyle}" Click="BtnWinMaximize_Click"/>
+                    <Button Content="&#xE8BB;" Width="46" Height="40" Style="{StaticResource WinCloseButtonStyle}" Click="BtnWinClose_Click"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Main Workspace -->
-        <Grid Grid.Row="1">
+        <!-- ROW 1: EDGE NAVIGATION & ADDRESS BAR TOOLBAR -->
+        <Border Grid.Row="1" Background="#2B2B2B" BorderBrush="#202020" BorderThickness="0,0,0,1" Padding="10,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left Nav Buttons -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Name="BtnOpenPdfNav" Content="📂 Open" Style="{StaticResource HeaderButtonStyle}" Click="BtnOpenPdf_Click"/>
+                    <Button Name="BtnResetPdf" Content="Close All" Style="{StaticResource HeaderButtonStyle}" Margin="6,0,8,0" Click="BtnResetPdf_Click"/>
+                </StackPanel>
+
+                <!-- Middle Address Bar Display (URL / Path Bar) -->
+                <Border Grid.Column="1" Style="{StaticResource AddressBarStyle}" Margin="4,0">
+                    <Grid VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" Text="🔒" Foreground="#22C55E" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Name="TxtAddressBar" Grid.Column="1" Text="file:///select-a-pdf-file" 
+                                   Foreground="#C0C0C0" FontSize="12" FontFamily="Consolas" VerticalAlignment="Center" 
+                                   TextTrimming="CharacterEllipsis"/>
+                    </Grid>
+                </Border>
+
+                <!-- Right Action Panel: 3-Dot Overflow Menu (...) -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Tombol Titik Tiga (...) -->
+                    <Button Name="BtnMoreMenu" Content="&#xE712;" Style="{StaticResource HeaderButtonStyle}" 
+                            Width="32" Height="30" FontFamily="Segoe MDL2 Assets" FontSize="12" Padding="0"
+                            ToolTip="Settings and options" Click="BtnMoreMenu_Click"/>
+
+                    <!-- Edge-Style Popup Overflow Menu -->
+                    <Popup Name="MoreMenuPopup" StaysOpen="False" Placement="Bottom" PlacementTarget="{Binding ElementName=BtnMoreMenu}" HorizontalOffset="-170" VerticalOffset="4">
+                        <Border Background="#252525" BorderBrush="#383838" BorderThickness="1" CornerRadius="8" Padding="6" Width="210">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="12" Color="Black" Opacity="0.5" ShadowDepth="4"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <!-- Fitur Auto Copy Text -->
+                                <Border Name="MenuItemAutoCopy" Background="Transparent" Padding="8,6" CornerRadius="4" Cursor="Hand" MouseLeftButtonDown="MenuItemAutoCopy_Click">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#333333"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="📋" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <TextBlock Grid.Column="1" Text="Auto Copy Highlight" Foreground="#F1F1F1" FontSize="12" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                        <CheckBox Name="ChkAutoCopy" Grid.Column="2" IsChecked="True" VerticalAlignment="Center" Cursor="Hand"/>
+                                    </Grid>
+                                </Border>
+
+                                <Separator Background="#383838" Margin="4,4"/>
+
+                                <!-- Item SKU Summary -->
+                                <Border Name="MenuItemSkuSummary" Background="Transparent" Padding="8,6" CornerRadius="4" Cursor="Hand" MouseLeftButtonDown="MenuItemSkuSummary_Click">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#333333"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="📦" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <TextBlock Grid.Column="1" Text="SKU Summary" Foreground="#F1F1F1" FontSize="12" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Item Log -->
+                                <Border Name="MenuItemLog" Background="Transparent" Padding="8,6" CornerRadius="4" Cursor="Hand" MouseLeftButtonDown="MenuItemLog_Click">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#333333"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="📝" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <TextBlock Grid.Column="1" Text="Log" Foreground="#F1F1F1" FontSize="12" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                    </Grid>
+                                </Border>
+
+                                <Separator Background="#383838" Margin="4,4"/>
+
+                                <!-- Placeholder Fitur Masa Depan -->
+                                <Border Background="Transparent" Padding="8,6" CornerRadius="4" Opacity="0.5">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="⚙️" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <TextBlock Grid.Column="1" Text="Settings (Coming Soon)" Foreground="#A0A0A0" FontSize="12" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </Popup>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ROW 2: MAIN WORKSPACE -->
+        <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- PDF Viewer & Main Toast -->
+            <!-- PDF Content Area -->
             <Grid Grid.Column="0">
-                <wv2:WebView2 Name="PdfWebViewer"/>
+                <ContentControl Name="PdfTabContentPresenter" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
 
-                <Border Name="PlaceholderPanel" Background="#1E1E1E" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <!-- Placeholder Panel saat Belum Ada PDF Terbuka -->
+                <Border Name="PlaceholderPanel" Background="#1E1E1E" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Visibility="Visible">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBlock Text="📄" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,12" Opacity="0.8"/>
                         <TextBlock Text="Select a PDF File to Get Started" Foreground="#E0E0E0" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center"/>
@@ -129,10 +363,7 @@
                 </Border>
 
                 <!-- Toast Notification PDF Copy -->
-                <Border Name="ToastNotification" 
-                        Background="#252525" BorderBrush="#22C55E" BorderThickness="1.5" CornerRadius="8" 
-                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,16,24,0" Padding="12,8" 
-                        Visibility="Collapsed" Panel.ZIndex="999">
+                <Border Name="ToastNotification" Background="#252525" BorderBrush="#22C55E" BorderThickness="1.5" CornerRadius="8" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,16,24,0" Padding="12,8" Visibility="Collapsed" Panel.ZIndex="999">
                     <Border.Effect>
                         <DropShadowEffect BlurRadius="12" Color="Black" Opacity="0.5" ShadowDepth="2"/>
                     </Border.Effect>
@@ -149,8 +380,7 @@
             </Grid>
 
             <!-- RIGHT SIDE PANEL (SKU Summary + Log) -->
-            <Border Name="PanelSkuRecap" Grid.Column="1" Width="350" Visibility="Collapsed"
-                    Background="#222222" BorderBrush="#333333" BorderThickness="1,0,0,0" Padding="12">
+            <Border Name="PanelSkuRecap" Grid.Column="1" Width="350" Visibility="Collapsed" Background="#222222" BorderBrush="#333333" BorderThickness="1,0,0,0" Padding="12">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -176,8 +406,7 @@
                             </Grid>
                         </Border>
 
-                        <Button Grid.Column="1" Content="✕" Width="22" Height="22" Margin="8,0,0,0" Background="Transparent" 
-                                Foreground="#888888" BorderThickness="0" FontWeight="Bold" Cursor="Hand" Click="BtnToggleSku_Click"/>
+                        <Button Grid.Column="1" Content="✕" Width="22" Height="22" Margin="8,0,0,0" Background="Transparent" Foreground="#888888" BorderThickness="0" FontWeight="Bold" Cursor="Hand" Click="BtnToggleSku_Click"/>
                     </Grid>
 
                     <!-- TAB 1 CONTENT: SKU SUMMARY -->
@@ -194,18 +423,14 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBox Name="TxtSkuInput" Height="30" Padding="8,4" Background="#1A1A1A" Foreground="#FFFFFF" 
-                                     BorderBrush="#444444" BorderThickness="1" FontSize="12" VerticalAlignment="Center"
-                                     CharacterCasing="Upper" KeyDown="TxtSkuInput_KeyDown">
+                            <TextBox Name="TxtSkuInput" Height="30" Padding="8,4" Background="#1A1A1A" Foreground="#FFFFFF" BorderBrush="#444444" BorderThickness="1" FontSize="12" VerticalAlignment="Center" CharacterCasing="Upper" KeyDown="TxtSkuInput_KeyDown">
                                 <TextBox.Resources>
                                     <Style TargetType="Border">
                                         <Setter Property="CornerRadius" Value="4"/>
                                     </Style>
                                 </TextBox.Resources>
                             </TextBox>
-                            <Button Grid.Column="1" Content="+ Add" Height="30" Padding="10,0" Margin="6,0,0,0"
-                                    Background="#0066FF" Foreground="#FFFFFF" BorderThickness="0" FontWeight="SemiBold"
-                                    FontSize="12" Cursor="Hand" Click="BtnAddSku_Click">
+                            <Button Grid.Column="1" Content="+ Add" Height="30" Padding="10,0" Margin="6,0,0,0" Background="#0066FF" Foreground="#FFFFFF" BorderThickness="0" FontWeight="SemiBold" FontSize="12" Cursor="Hand" Click="BtnAddSku_Click">
                                 <Button.Resources>
                                     <Style TargetType="Border">
                                         <Setter Property="CornerRadius" Value="4"/>
@@ -241,12 +466,14 @@
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
 
-                                                <TextBlock Grid.Column="0" Text="{Binding Name}" Foreground="#F1F1F1" FontSize="12" 
-                                                           VerticalAlignment="Center" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                                <TextBlock Grid.Column="0" Text="{Binding Name}" Foreground="#F1F1F1" FontSize="12" VerticalAlignment="Center" FontWeight="SemiBold" TextWrapping="Wrap"/>
 
+                                                <!-- StackPanel Sejajar Presisi untuk Tombol Minus, TextBox, dan Plus -->
                                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0">
                                                     <Button Content="-" Width="24" Height="24" Background="#383838" Foreground="#FFFFFF" 
-                                                            BorderThickness="0" FontWeight="Bold" Cursor="Hand" Click="BtnDecrement_Click" Tag="{Binding}">
+                                                            BorderThickness="0" FontWeight="Bold" FontSize="12" Cursor="Hand"
+                                                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="0"
+                                                            Click="BtnDecrement_Click" Tag="{Binding}">
                                                         <Button.Resources>
                                                             <Style TargetType="Border">
                                                                 <Setter Property="CornerRadius" Value="3"/>
@@ -255,8 +482,9 @@
                                                     </Button>
 
                                                     <TextBox Text="{Binding Quantity, UpdateSourceTrigger=LostFocus, Mode=TwoWay}" 
-                                                             Foreground="#22C55E" Background="#1A1A1A" BorderBrush="#444444" BorderThickness="1"
+                                                             Foreground="#22C55E" Background="#1A1A1A" BorderBrush="#444444" BorderThickness="1" 
                                                              FontWeight="Bold" FontSize="12" Width="40" Height="24" TextAlignment="Center" 
+                                                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="0"
                                                              VerticalAlignment="Center" Margin="4,0" PreviewTextInput="NumberValidationTextBox">
                                                         <TextBox.Resources>
                                                             <Style TargetType="Border">
@@ -266,7 +494,9 @@
                                                     </TextBox>
 
                                                     <Button Content="+" Width="24" Height="24" Background="#383838" Foreground="#FFFFFF" 
-                                                            BorderThickness="0" FontWeight="Bold" Cursor="Hand" Click="BtnIncrement_Click" Tag="{Binding}">
+                                                            BorderThickness="0" FontWeight="Bold" FontSize="12" Cursor="Hand"
+                                                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="0"
+                                                            Click="BtnIncrement_Click" Tag="{Binding}">
                                                         <Button.Resources>
                                                             <Style TargetType="Border">
                                                                 <Setter Property="CornerRadius" Value="3"/>
@@ -275,9 +505,7 @@
                                                     </Button>
                                                 </StackPanel>
 
-                                                <Button Grid.Column="2" Content="✕" Width="20" Height="20" Background="Transparent" 
-                                                        Foreground="#EF4444" BorderThickness="0" FontWeight="Bold" FontSize="11" 
-                                                        Cursor="Hand" Click="BtnDeleteSku_Click" Tag="{Binding}"/>
+                                                <Button Grid.Column="2" Content="✕" Width="20" Height="20" Background="Transparent" Foreground="#EF4444" BorderThickness="0" FontWeight="Bold" FontSize="11" Cursor="Hand" Click="BtnDeleteSku_Click" Tag="{Binding}"/>
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -288,8 +516,7 @@
                         <!-- SKU Action Buttons -->
                         <StackPanel Grid.Row="2" Margin="0,10,0,0">
                             <!-- Toast In-Panel SKU -->
-                            <Border Name="SkuToastNotification" Background="#252525" BorderBrush="#22C55E" BorderThickness="1.5" 
-                                    CornerRadius="6" HorizontalAlignment="Stretch" Margin="0,0,0,8" Padding="10,6" Visibility="Collapsed">
+                            <Border Name="SkuToastNotification" Background="#252525" BorderBrush="#22C55E" BorderThickness="1.5" CornerRadius="6" HorizontalAlignment="Stretch" Margin="0,0,0,8" Padding="10,6" Visibility="Collapsed">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="10" Color="Black" Opacity="0.5" ShadowDepth="2"/>
                                 </Border.Effect>
@@ -301,24 +528,21 @@
                                 </StackPanel>
                             </Border>
 
-                            <Button Name="BtnExportSku" Content="📋 Copy SKU Summary" Height="34" Background="#22C55E" Foreground="#FFFFFF" 
-                                    BorderThickness="0" FontWeight="Bold" FontSize="12" Cursor="Hand" Click="BtnExportSku_Click">
+                            <Button Name="BtnExportSku" Content="📋 Copy SKU Summary" Height="34" Background="#22C55E" Foreground="#FFFFFF" BorderThickness="0" FontWeight="Bold" FontSize="12" Cursor="Hand" Click="BtnExportSku_Click">
                                 <Button.Resources>
                                     <Style TargetType="Border">
                                         <Setter Property="CornerRadius" Value="4"/>
                                     </Style>
                                 </Button.Resources>
                             </Button>
-                            <Button Name="BtnResetQty" Content="🔄 Reset Quantities (Set to 0)" Height="28" Margin="0,6,0,0" Background="#333333" 
-                                    Foreground="#A0A0A0" BorderThickness="0" FontSize="11" Cursor="Hand" Click="BtnResetQty_Click">
+                            <Button Name="BtnResetQty" Content="🔄 Reset Quantities (Set to 0)" Height="28" Margin="0,6,0,0" Background="#333333" Foreground="#A0A0A0" BorderThickness="0" FontSize="11" Cursor="Hand" Click="BtnResetQty_Click">
                                 <Button.Resources>
                                     <Style TargetType="Border">
                                         <Setter Property="CornerRadius" Value="4"/>
                                     </Style>
                                 </Button.Resources>
                             </Button>
-                            <Button Name="BtnClearAllSku" Content="🗑️ Clear All SKUs" Height="28" Margin="0,6,0,0" Background="#333333" 
-                                    Foreground="#EF4444" BorderThickness="0" FontSize="11" Cursor="Hand" Click="BtnClearAllSku_Click">
+                            <Button Name="BtnClearAllSku" Content="🗑️ Clear All SKUs" Height="28" Margin="0,6,0,0" Background="#333333" Foreground="#EF4444" BorderThickness="0" FontSize="11" Cursor="Hand" Click="BtnClearAllSku_Click">
                                 <Button.Resources>
                                     <Style TargetType="Border">
                                         <Setter Property="CornerRadius" Value="4"/>
@@ -330,14 +554,7 @@
 
                     <!-- TAB 2 CONTENT: LOG -->
                     <Grid Name="GridNotesContent" Grid.Row="1" Visibility="Collapsed">
-                        <TextBox Name="TxtScratchpad"
-                                 AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap" 
-                                 VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
-                                 Background="#1A1A1A" Foreground="#F1F1F1" BorderBrush="#444444" BorderThickness="1"
-                                 Padding="10" FontSize="15" FontFamily="Constantia"
-                                 TextChanged="TxtScratchpad_TextChanged"
-                                 SelectionChanged="TxtScratchpad_SelectionChanged"
-                                 KeyDown="TxtScratchpad_KeyDown">
+                        <TextBox Name="TxtScratchpad" AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="#1A1A1A" Foreground="#F1F1F1" BorderBrush="#444444" BorderThickness="1" Padding="10" FontSize="15" FontFamily="Constantia" TextChanged="TxtScratchpad_TextChanged" SelectionChanged="TxtScratchpad_SelectionChanged" KeyDown="TxtScratchpad_KeyDown">
                             <TextBox.Resources>
                                 <Style TargetType="Border">
                                     <Setter Property="CornerRadius" Value="6"/>

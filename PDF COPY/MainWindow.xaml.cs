@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -15,6 +16,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Microsoft.Web.WebView2.Core;
+using Microsoft.Web.WebView2.Wpf;
 using Microsoft.Win32;
 
 namespace PDF_COPY
@@ -107,7 +109,6 @@ namespace PDF_COPY
             LoadWindowSettings();
             LoadAppData();
             InitializeToastTimer();
-            InitializeWebViewEngine();
 
             SwitchTab(isSkuTab: true);
 
@@ -118,7 +119,211 @@ namespace PDF_COPY
                 SaveAppData();
                 UnhookWindowsHookEx(_hookID);
             };
+
+            Loaded += MainWindow_Loaded;
         }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(_initialPdfPath) && File.Exists(_initialPdfPath))
+            {
+                OpenPdfInNewTab(_initialPdfPath);
+            }
+        }
+
+        #region Title Bar Control Actions
+        private void BtnWinMinimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+        private void BtnWinMaximize_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        }
+        private void BtnWinClose_Click(object sender, RoutedEventArgs e) => Close();
+        #endregion
+
+        #region 3-Dot Overflow Menu Handler
+        private void BtnMoreMenu_Click(object sender, RoutedEventArgs e)
+        {
+            MoreMenuPopup.IsOpen = !MoreMenuPopup.IsOpen;
+        }
+
+        private void MenuItemAutoCopy_Click(object sender, MouseButtonEventArgs e)
+        {
+            ChkAutoCopy.IsChecked = !ChkAutoCopy.IsChecked;
+        }
+
+        private void MenuItemSkuSummary_Click(object sender, MouseButtonEventArgs e)
+        {
+            MoreMenuPopup.IsOpen = false;
+            if (PanelSkuRecap.Visibility == Visibility.Visible && GridSkuContent.Visibility == Visibility.Visible)
+            {
+                PanelSkuRecap.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                PanelSkuRecap.Visibility = Visibility.Visible;
+                SwitchTab(isSkuTab: true);
+            }
+        }
+
+        private void MenuItemLog_Click(object sender, MouseButtonEventArgs e)
+        {
+            MoreMenuPopup.IsOpen = false;
+            if (PanelSkuRecap.Visibility == Visibility.Visible && GridNotesContent.Visibility == Visibility.Visible)
+            {
+                PanelSkuRecap.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                PanelSkuRecap.Visibility = Visibility.Visible;
+                SwitchTab(isSkuTab: false);
+            }
+        }
+        #endregion
+
+        #region Multi-Tab PDF System (Edge-Style Responsive Tabs)
+        public void OpenPdfInNewTab(string filePath)
+        {
+            string fileName = Path.GetFileName(filePath);
+
+            // Jika PDF sudah ada di salah satu tab, aktifkan tab tersebut
+            foreach (TabItem existingTab in PdfTabControl.Items)
+            {
+                if (existingTab.Tag is Tuple<string, WebView2> tuple && tuple.Item1.Equals(filePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    PdfTabControl.SelectedItem = existingTab;
+                    return;
+                }
+            }
+
+            WebView2 webViewer = new WebView2();
+
+            // Format Header Tab Menggunakan Grid Responsive
+            Grid headerGrid = new Grid
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(2, 0, 2, 0)
+            };
+            headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            TextBlock txtIcon = new TextBlock
+            {
+                Text = "📄",
+                FontSize = 12,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(2, 0, 6, 0)
+            };
+            Grid.SetColumn(txtIcon, 0);
+
+            TextBlock txtTitle = new TextBlock
+            {
+                Text = fileName,
+                FontSize = 12,
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0")),
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(txtTitle, 1);
+
+            Button btnClose = new Button
+            {
+                Content = "✕",
+                Width = 20,
+                Height = 20,
+                Margin = new Thickness(4, 0, 2, 0),
+                Background = Brushes.Transparent,
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#999999")),
+                BorderThickness = new Thickness(0),
+                FontWeight = FontWeights.Normal,
+                FontSize = 10,
+                Cursor = Cursors.Hand,
+                HorizontalContentAlignment = HorizontalAlignment.Center,
+                VerticalContentAlignment = VerticalAlignment.Center,
+                Padding = new Thickness(0)
+            };
+            Grid.SetColumn(btnClose, 2);
+
+            headerGrid.Children.Add(txtIcon);
+            headerGrid.Children.Add(txtTitle);
+            headerGrid.Children.Add(btnClose);
+
+            TabItem tabItem = new TabItem
+            {
+                Header = headerGrid,
+                Tag = new Tuple<string, WebView2>(filePath, webViewer),
+                Style = (Style)FindResource("EdgeTabItemStyle")
+            };
+
+            btnClose.Click += (s, e) => ClosePdfTab(tabItem);
+
+            PdfTabControl.Items.Add(tabItem);
+            PdfTabControl.SelectedItem = tabItem;
+
+            InitializeTabWebView(webViewer, filePath);
+        }
+
+        private async void InitializeTabWebView(WebView2 webViewer, string filePath)
+        {
+            await webViewer.EnsureCoreWebView2Async(null);
+
+            webViewer.CoreWebView2.NavigationStarting += (s, e) =>
+            {
+                if (e.Uri.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                    e.Uri.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                {
+                    e.Cancel = true;
+                }
+            };
+            webViewer.CoreWebView2.NewWindowRequested += (s, e) => e.Handled = true;
+
+            webViewer.CoreWebView2.Navigate(new Uri(filePath).AbsoluteUri);
+        }
+
+        private void ClosePdfTab(TabItem tabItem)
+        {
+            if (tabItem.Tag is Tuple<string, WebView2> tuple)
+            {
+                tuple.Item2.Dispose();
+            }
+
+            PdfTabControl.Items.Remove(tabItem);
+
+            if (PdfTabControl.Items.Count == 0)
+            {
+                PdfTabContentPresenter.Content = null;
+                PlaceholderPanel.Visibility = Visibility.Visible;
+                TxtAddressBar.Text = "file:///select-a-pdf-file";
+                _lastCopiedText = string.Empty;
+            }
+        }
+
+        private void PdfTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (PdfTabControl.SelectedItem is TabItem selectedTab && selectedTab.Tag is Tuple<string, WebView2> tuple)
+            {
+                TxtAddressBar.Text = new Uri(tuple.Item1).AbsoluteUri;
+                PdfTabContentPresenter.Content = tuple.Item2;
+                PlaceholderPanel.Visibility = Visibility.Collapsed;
+            }
+            else if (PdfTabControl.Items.Count == 0)
+            {
+                PdfTabContentPresenter.Content = null;
+                PlaceholderPanel.Visibility = Visibility.Visible;
+                TxtAddressBar.Text = "file:///select-a-pdf-file";
+            }
+        }
+
+        private WebView2? GetActiveWebViewer()
+        {
+            if (PdfTabControl.SelectedItem is TabItem selectedTab && selectedTab.Tag is Tuple<string, WebView2> tuple)
+            {
+                return tuple.Item2;
+            }
+            return null;
+        }
+        #endregion
 
         #region Side Panel Tab Switcher
         private void SwitchTab(bool isSkuTab)
@@ -147,66 +352,33 @@ namespace PDF_COPY
         private void BtnTabNotes_Click(object sender, RoutedEventArgs e) => SwitchTab(isSkuTab: false);
         #endregion
 
-        #region Engine Initialization & External Navigation Blocking
-        private async void InitializeWebViewEngine()
-        {
-            await PdfWebViewer.EnsureCoreWebView2Async(null);
-
-            PdfWebViewer.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
-            PdfWebViewer.CoreWebView2.NewWindowRequested += CoreWebView2_NewWindowRequested;
-
-            if (!string.IsNullOrEmpty(_initialPdfPath) && File.Exists(_initialPdfPath))
-            {
-                OpenPdfFile(_initialPdfPath);
-            }
-        }
-
-        private void CoreWebView2_NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
-        {
-            if (e.Uri.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-                e.Uri.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-            {
-                e.Cancel = true;
-            }
-        }
-
-        private void CoreWebView2_NewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs e)
-        {
-            e.Handled = true;
-        }
-        #endregion
-
         #region Open & Reset PDF Features
-        private void OpenPdfFile(string filePath)
-        {
-            TxtFileName.Text = Path.GetFileName(filePath);
-            PlaceholderPanel.Visibility = Visibility.Collapsed;
-            PdfWebViewer.CoreWebView2.Navigate(new Uri(filePath).AbsoluteUri);
-        }
-
         private void BtnOpenPdf_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog
             {
                 Filter = "PDF Files (*.pdf)|*.pdf",
-                Title = "Select PDF File"
+                Title = "Select PDF File",
+                Multiselect = true
             };
 
             if (openFileDialog.ShowDialog() == true)
             {
-                OpenPdfFile(openFileDialog.FileName);
+                foreach (string file in openFileDialog.FileNames)
+                {
+                    OpenPdfInNewTab(file);
+                }
             }
         }
 
         private void BtnResetPdf_Click(object sender, RoutedEventArgs e)
         {
-            TxtFileName.Text = string.Empty;
-            PlaceholderPanel.Visibility = Visibility.Visible;
-            _lastCopiedText = string.Empty;
-
-            if (PdfWebViewer.CoreWebView2 != null)
+            while (PdfTabControl.Items.Count > 0)
             {
-                PdfWebViewer.CoreWebView2.Navigate("about:blank");
+                if (PdfTabControl.Items[0] is TabItem tab)
+                {
+                    ClosePdfTab(tab);
+                }
             }
         }
         #endregion
@@ -387,11 +559,9 @@ namespace PDF_COPY
             {
                 if (!Directory.Exists(AppFolder)) Directory.CreateDirectory(AppFolder);
 
-                // 1. Simpan Daftar SKU Summary
                 string skuJson = JsonSerializer.Serialize(SkuList, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(SkuDataPath, skuJson, Encoding.UTF8);
 
-                // 2. Simpan Teks Log Notepad
                 File.WriteAllText(NotesDataPath, TxtScratchpad.Text, Encoding.UTF8);
             }
             catch { }
@@ -401,7 +571,6 @@ namespace PDF_COPY
         {
             try
             {
-                // 1. Muat Daftar SKU Summary
                 if (File.Exists(SkuDataPath))
                 {
                     string skuJson = File.ReadAllText(SkuDataPath, Encoding.UTF8);
@@ -413,7 +582,6 @@ namespace PDF_COPY
                     }
                 }
 
-                // 2. Muat Teks Log Notepad
                 if (File.Exists(NotesDataPath))
                 {
                     TxtScratchpad.Text = File.ReadAllText(NotesDataPath, Encoding.UTF8);
@@ -492,8 +660,9 @@ namespace PDF_COPY
         #region Auto Copy & Mouse Hook
         private async Task OnMouseUpDetectedAsync()
         {
-            if (ChkAutoCopy.IsChecked != true || PdfWebViewer.Source == null) return;
-            if (!IsMouseOverWebViewer()) return;
+            WebView2? activeWebViewer = GetActiveWebViewer();
+            if (ChkAutoCopy.IsChecked != true || activeWebViewer == null || activeWebViewer.Source == null) return;
+            if (!IsMouseOverActiveWebViewer(activeWebViewer)) return;
 
             await Task.Delay(80);
             SimulateCtrlC();
@@ -510,15 +679,15 @@ namespace PDF_COPY
             }
         }
 
-        private bool IsMouseOverWebViewer()
+        private bool IsMouseOverActiveWebViewer(WebView2 activeWebViewer)
         {
             try
             {
                 if (GetCursorPos(out POINT p))
                 {
-                    Point relativePoint = PdfWebViewer.PointFromScreen(new Point(p.X, p.Y));
-                    return relativePoint.X >= 0 && relativePoint.X <= PdfWebViewer.ActualWidth &&
-                           relativePoint.Y >= 0 && relativePoint.Y <= PdfWebViewer.ActualHeight;
+                    Point relativePoint = activeWebViewer.PointFromScreen(new Point(p.X, p.Y));
+                    return relativePoint.X >= 0 && relativePoint.X <= activeWebViewer.ActualWidth &&
+                           relativePoint.Y >= 0 && relativePoint.Y <= activeWebViewer.ActualHeight;
                 }
             }
             catch { }
